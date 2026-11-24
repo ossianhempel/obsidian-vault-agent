@@ -1,0 +1,35 @@
+{
+  "name": "obsidian-vault-agent",
+  "version": "0.1.0",
+  "description": "Multi-provider AI agent sidebar for Obsidian using your local subscription CLIs (Claude Code, Codex, Antigravity, GitHub Copilot, OpenCode) with active-file context, marked text snippet attachments, and Obsidian CLI vault traversal.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "typecheck": "tsc -noEmit -skipLibCheck",
+    "test": "vitest run",
+    "deploy": "npm run build && node scripts/deploy.mjs"
+  },
+  "keywords": [
+    "obsidian",
+    "obsidian-plugin",
+    "ai",
+    "agent",
+    "claude",
+    "codex",
+    "copilot",
+    "antigravity"
+  ],
+  "author": "Ossian Hempel",
+  "license": "MIT",
+  "devDependencies": {
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.4",
+    "@types/node": "^22.15.0",
+    "builtin-modules": "^5.0.0",
+    "esbuild": "^0.25.4",
+    "obsidian": "^1.8.10",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.3"
+  }
+}

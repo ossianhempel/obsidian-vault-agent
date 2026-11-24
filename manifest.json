@@ -1,0 +1,10 @@
+{
+  "id": "vault-agent",
+  "name": "Vault Agent",
+  "version": "0.1.0",
+  "minAppVersion": "1.6.0",
+  "description": "Side-panel AI agent for Obsidian using your subscribed AI CLIs (Claude Code, Codex, Antigravity, GitHub Copilot, OpenCode) with active-file context, marked text selection attachments, and Obsidian CLI vault traversal.",
+  "author": "Ossian Hempel",
+  "authorUrl": "https://github.com/ossianhempel",
+  "isDesktopOnly": true
+}

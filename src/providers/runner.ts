@@ -320,7 +320,7 @@ export function runProviderTurn(
       if (child && !child.killed) {
         try {
           child.kill("SIGTERM");
-          setTimeout(() => {
+          window.setTimeout(() => {
             if (child && !child.killed) {
               try {
                 child.kill("SIGKILL");

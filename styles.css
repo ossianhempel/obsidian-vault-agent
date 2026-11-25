@@ -466,6 +466,7 @@
   color: var(--text-normal);
   min-height: 38px;
   max-height: 180px;
+  field-sizing: content;
 }
 
 .vault-agent-composer-footer {
@@ -677,4 +678,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.vault-agent-textarea-full {
+  width: 100%;
 }

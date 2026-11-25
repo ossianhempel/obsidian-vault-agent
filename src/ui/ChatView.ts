@@ -16,13 +16,11 @@ import {
 } from "../providers/runner";
 import type {
   ActiveFileContext,
-  AgentMode,
   ChatMessage,
   ChatSession,
   EffortLevel,
   ModelInfo,
   ProviderId,
-  TextSnippetAttachment,
   ToolActivityItem,
 } from "../types";
 import type VaultAgentPlugin from "../main";
@@ -65,7 +63,7 @@ export class VaultAgentChatView extends ItemView {
   private activeFileIncludedOverride: boolean | null = null;
   private renderComponent = new Component();
   private userScrolledUp = false;
-  private streamRenderTimer: ReturnType<typeof setTimeout> | null = null;
+  private streamRenderTimer: number | null = null;
   private streamingBodyEl: HTMLElement | null = null;
   private streamingActivityEl: HTMLElement | null = null;
   private streamingThinkingEl: HTMLElement | null = null;
@@ -83,7 +81,7 @@ export class VaultAgentChatView extends ItemView {
   }
 
   getDisplayText(): string {
-    return "Vault Agent";
+    return "Vault CLI Agent";
   }
 
   getIcon(): string {
@@ -104,8 +102,8 @@ export class VaultAgentChatView extends ItemView {
 
   async onClose(): Promise<void> {
     this.stopCurrentTurn();
-    if (this.streamRenderTimer) {
-      clearTimeout(this.streamRenderTimer);
+    if (this.streamRenderTimer !== null) {
+      window.clearTimeout(this.streamRenderTimer);
       this.streamRenderTimer = null;
     }
     this.renderComponent.unload();
@@ -136,10 +134,10 @@ export class VaultAgentChatView extends ItemView {
       cls: "vault-agent-session-select",
       attr: { "aria-label": "Chat session" },
     });
-    this.sessionSelectEl.addEventListener("change", async () => {
+    this.sessionSelectEl.addEventListener("change", () => {
       const id = this.sessionSelectEl.value;
       if (id) {
-        await this.plugin.setActiveSession(id);
+        void this.plugin.setActiveSession(id);
       }
     });
 
@@ -150,12 +148,13 @@ export class VaultAgentChatView extends ItemView {
       attr: { "aria-label": "New chat", title: "New chat" },
     });
     setIcon(newBtn, "plus");
-    newBtn.addEventListener("click", async () => {
+    newBtn.addEventListener("click", () => {
       if (this.activeTurn) {
         this.stopCurrentTurn();
       }
-      await this.plugin.createNewSession();
-      this.focusInput();
+      void this.plugin.createNewSession().then(() => {
+        this.focusInput();
+      });
     });
 
     const clearBtn = actions.createEl("button", {
@@ -163,11 +162,11 @@ export class VaultAgentChatView extends ItemView {
       attr: { "aria-label": "Delete chat", title: "Delete current chat" },
     });
     setIcon(clearBtn, "trash-2");
-    clearBtn.addEventListener("click", async () => {
+    clearBtn.addEventListener("click", () => {
       if (this.activeTurn) {
         this.stopCurrentTurn();
       }
-      await this.plugin.deleteActiveSession();
+      void this.plugin.deleteActiveSession();
     });
   }
 
@@ -219,16 +218,16 @@ export class VaultAgentChatView extends ItemView {
       cls: "vault-agent-picker vault-agent-picker-provider",
       attr: { "aria-label": "AI Provider", title: "AI Provider" },
     });
-    this.providerSelectEl.addEventListener("change", async () => {
+    this.providerSelectEl.addEventListener("change", () => {
       const provider = this.providerSelectEl.value as ProviderId;
-      await this.handleProviderChange(provider);
+      void this.handleProviderChange(provider);
     });
 
     this.modelSelectEl = modelRow.createEl("select", {
       cls: "vault-agent-picker vault-agent-picker-model",
       attr: { "aria-label": "Model", title: "Model" },
     });
-    this.modelSelectEl.addEventListener("change", async () => {
+    this.modelSelectEl.addEventListener("change", () => {
       const session = this.plugin.getActiveSession();
       session.model = this.modelSelectEl.value;
       this.plugin.settings.defaultModelByProvider[session.provider] = session.model;
@@ -236,7 +235,7 @@ export class VaultAgentChatView extends ItemView {
       if (modelInfo && !modelInfo.efforts.includes(session.effort)) {
         session.effort = modelInfo.defaultEffort;
       }
-      await this.plugin.savePluginData();
+      void this.plugin.savePluginData();
       this.renderControls();
     });
 
@@ -247,22 +246,22 @@ export class VaultAgentChatView extends ItemView {
       cls: "vault-agent-picker vault-agent-picker-effort",
       attr: { "aria-label": "Effort level", title: "Reasoning effort level" },
     });
-    this.effortSelectEl.addEventListener("change", async () => {
+    this.effortSelectEl.addEventListener("change", () => {
       const session = this.plugin.getActiveSession();
       session.effort = this.effortSelectEl.value as EffortLevel;
       this.plugin.settings.defaultEffortByProvider[session.provider] = session.effort;
-      await this.plugin.savePluginData();
+      void this.plugin.savePluginData();
     });
 
     this.modeToggleBtn = actionLeft.createEl("button", {
       cls: "vault-agent-mode-btn",
       attr: { type: "button" },
     });
-    this.modeToggleBtn.addEventListener("click", async () => {
+    this.modeToggleBtn.addEventListener("click", () => {
       const session = this.plugin.getActiveSession();
       session.mode = session.mode === "ask" ? "agent" : "ask";
       this.plugin.settings.defaultMode = session.mode;
-      await this.plugin.savePluginData();
+      void this.plugin.savePluginData();
       this.renderControls();
     });
 
@@ -281,9 +280,8 @@ export class VaultAgentChatView extends ItemView {
 
   private autoResizeInput(): void {
     if (!this.inputEl) return;
-    this.inputEl.style.height = "auto";
-    const max = 180;
-    this.inputEl.style.height = `${Math.min(this.inputEl.scrollHeight, max)}px`;
+    const lineCount = this.inputEl.value.split("\n").length;
+    this.inputEl.rows = Math.min(8, Math.max(2, lineCount));
   }
 
   private renderSessionHeader(): void {
@@ -570,7 +568,7 @@ export class VaultAgentChatView extends ItemView {
     const empty = this.messagesEl.createDiv({ cls: "vault-agent-empty" });
     const icon = empty.createDiv({ cls: "vault-agent-empty-icon" });
     setIcon(icon, "sparkles");
-    empty.createEl("h4", { text: "Vault Agent" });
+    empty.createEl("h4", { text: "Vault CLI Agent" });
     empty.createEl("p", {
       text: "Select text in any note to mark & attach excerpts, or ask a question about your focused note and vault.",
     });
@@ -676,9 +674,10 @@ export class VaultAgentChatView extends ItemView {
         text: "Copy",
         attr: { type: "button" },
       });
-      copyBtn.addEventListener("click", async () => {
-        await navigator.clipboard.writeText(msg.content);
-        new Notice("Copied response to clipboard.");
+      copyBtn.addEventListener("click", () => {
+        void navigator.clipboard.writeText(msg.content).then(() => {
+          new Notice("Copied response to clipboard.");
+        });
       });
 
       const insertBtn = actions.createEl("button", {
@@ -771,8 +770,8 @@ export class VaultAgentChatView extends ItemView {
   }
 
   private scheduleStreamRender(): void {
-    if (this.streamRenderTimer) return;
-    this.streamRenderTimer = setTimeout(() => {
+    if (this.streamRenderTimer !== null) return;
+    this.streamRenderTimer = window.setTimeout(() => {
       this.streamRenderTimer = null;
       if (!this.streamingMsg) return;
       if (this.streamingThinkingEl) {
@@ -837,7 +836,7 @@ export class VaultAgentChatView extends ItemView {
 
     const cache = this.app.metadataCache.getFileCache(file);
     const tags: string[] = [];
-    const fmTags = cache?.frontmatter?.tags;
+    const fmTags: unknown = cache?.frontmatter?.tags;
     if (Array.isArray(fmTags)) {
       for (const t of fmTags) tags.push(String(t));
     } else if (typeof fmTags === "string") {
@@ -960,6 +959,7 @@ export class VaultAgentChatView extends ItemView {
       userMessage: userText,
       vaultName: this.app.vault.getName(),
       vaultRootPath: vaultRoot,
+      configDir: this.app.vault.configDir,
       mode: session.mode,
       activeFile: activeFileCtx,
       snippets: attachedSnippets,
@@ -1072,8 +1072,8 @@ export class VaultAgentChatView extends ItemView {
 
     await this.activeTurn.promise;
 
-    if (this.streamRenderTimer) {
-      clearTimeout(this.streamRenderTimer);
+    if (this.streamRenderTimer !== null) {
+      window.clearTimeout(this.streamRenderTimer);
       this.streamRenderTimer = null;
     }
 

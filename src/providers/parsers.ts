@@ -200,9 +200,13 @@ export function parseCodexLine(line: string, state: ParserState): StreamEvent[] 
       }
     } else if (itemType === "file_change") {
       const changes = Array.isArray(item.changes) ? item.changes : [];
-      const firstPath =
+      const firstChange =
         changes[0] && typeof changes[0] === "object"
-          ? String((changes[0] as Record<string, unknown>).path ?? "")
+          ? (changes[0] as Record<string, unknown>)
+          : null;
+      const firstPath =
+        firstChange && typeof firstChange.path === "string"
+          ? firstChange.path
           : undefined;
       if (type === "item.started") {
         events.push({ type: "tool_start", id, name: "Edit", detail: firstPath });
@@ -252,7 +256,10 @@ export function parseAgyLine(line: string, state: ParserState): StreamEvent[] {
     }
     const stepType = typeof step.step_type === "string" ? step.step_type : "";
     const stepState = typeof step.state === "string" ? step.state : "";
-    const stepIdx = step.step_index !== undefined ? String(step.step_index) : String(Date.now());
+    const stepIdx =
+      typeof step.step_index === "number" || typeof step.step_index === "string"
+        ? String(step.step_index)
+        : String(Date.now());
 
     if (typeof step.thinking_delta === "string" && step.thinking_delta.length > 0) {
       events.push({ type: "thinking_delta", text: step.thinking_delta });

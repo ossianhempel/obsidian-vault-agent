@@ -73,7 +73,6 @@ export class AttachPatternModal extends Modal {
         slider
           .setLimits(0, 5, 1)
           .setValue(this.contextLines)
-          .setDynamicTooltip()
           .onChange((val) => {
             this.contextLines = val;
             this.updatePreview();

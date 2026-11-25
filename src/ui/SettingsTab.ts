@@ -16,19 +16,18 @@ export class VaultAgentSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.addClass("vault-agent-settings");
 
-    containerEl.createEl("h2", { text: "Vault Agent" });
-
     // CLI Health Status Card
     const statusSection = containerEl.createDiv({ cls: "vault-agent-status-card" });
     const headerRow = statusSection.createDiv({ cls: "vault-agent-status-header" });
-    headerRow.createEl("strong", { text: "Detected local CLIs (subscriptions & Obsidian)" });
-    const refreshBtn = headerRow.createEl("button", { text: "Re-scan CLIs & models" });
-    refreshBtn.addEventListener("click", async () => {
+    headerRow.createEl("strong", { text: "Detected local CLIs and vault context" });
+    const refreshBtn = headerRow.createEl("button", { text: "Re-scan CLIs and models" });
+    refreshBtn.addEventListener("click", () => {
       refreshBtn.disabled = true;
       refreshBtn.setText("Scanning…");
-      await this.plugin.refreshProviders();
-      new Notice("Vault Agent refreshed CLI providers and model catalogs.");
-      this.display();
+      void this.plugin.refreshProviders().then(() => {
+        new Notice("Refreshed CLI providers and model catalogs.");
+        this.display();
+      });
     });
 
     const listEl = statusSection.createDiv({ cls: "vault-agent-cli-grid" });
@@ -83,7 +82,7 @@ export class VaultAgentSettingTab extends PluginSettingTab {
       cls: "vault-agent-cli-path",
     });
 
-    containerEl.createEl("h3", { text: "Defaults" });
+    new Setting(containerEl).setName("Defaults").setHeading();
 
     new Setting(containerEl)
       .setName("Default AI provider")
@@ -103,10 +102,10 @@ export class VaultAgentSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Default mode")
-      .setDesc("Ask (read-only) prevents edits; Agent allows creating and modifying vault notes.")
+      .setDesc("Ask mode is read-only; Agent mode allows creating and modifying vault notes.")
       .addDropdown((dd) => {
-        dd.addOption("ask", "Ask (Read-only)");
-        dd.addOption("agent", "Agent (Can edit notes)");
+        dd.addOption("ask", "Ask (read-only)");
+        dd.addOption("agent", "Agent (can edit notes)");
         dd.setValue(this.plugin.settings.defaultMode);
         dd.onChange(async (val) => {
           this.plugin.settings.defaultMode = val as AgentMode;
@@ -114,7 +113,7 @@ export class VaultAgentSettingTab extends PluginSettingTab {
         });
       });
 
-    containerEl.createEl("h3", { text: "Automatic note & selection context" });
+    new Setting(containerEl).setName("Automatic note and selection context").setHeading();
 
     new Setting(containerEl)
       .setName("Auto-attach active focused note")
@@ -233,10 +232,10 @@ export class VaultAgentSettingTab extends PluginSettingTab {
             await this.plugin.savePluginData();
           });
         area.inputEl.rows = 4;
-        area.inputEl.style.width = "100%";
+        area.inputEl.addClass("vault-agent-textarea-full");
       });
 
-    containerEl.createEl("h3", { text: "CLI binary path overrides (optional)" });
+    new Setting(containerEl).setName("CLI binary path overrides (optional)").setHeading();
 
     const binaryKeys: Array<{ key: ProviderId | "obsidian"; label: string; placeholder: string }> = [
       { key: "claude", label: "Claude CLI path", placeholder: "~/.local/bin/claude" },
@@ -266,7 +265,7 @@ export class VaultAgentSettingTab extends PluginSettingTab {
         });
     }
 
-    containerEl.createEl("h3", { text: "Extra custom models (comma-separated)" });
+    new Setting(containerEl).setName("Extra custom models (comma-separated)").setHeading();
     for (const pid of PROVIDER_ORDER) {
       new Setting(containerEl)
         .setName(`${PROVIDER_META[pid].displayName} custom models`)

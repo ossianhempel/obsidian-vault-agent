@@ -1,17 +1,17 @@
 import esbuild from "esbuild";
+import { builtinModules } from "node:module";
 import process from "node:process";
-import builtins from "builtin-modules";
 
 const banner = `/*
-Vault Agent — Obsidian Plugin
+Vault CLI Agent — Obsidian Plugin
 Built with esbuild
 */`;
 
 const prod = process.argv[2] === "production";
 
 const nodeExternals = [
-  ...builtins,
-  ...builtins.map((m) => `node:${m}`),
+  ...builtinModules,
+  ...builtinModules.map((m) => `node:${m}`),
 ];
 
 const context = await esbuild.context({

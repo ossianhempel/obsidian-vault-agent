@@ -54,7 +54,7 @@ export default class VaultAgentPlugin extends Plugin {
   private lastActiveFile: TFile | null = null;
   private draftSnippets: TextSnippetAttachment[] = [];
   private liveSelection: LiveSelectionPreview | null = null;
-  private selectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private selectionDebounceTimer: number | null = null;
 
   async onload(): Promise<void> {
     await this.loadPluginData();
@@ -76,14 +76,14 @@ export default class VaultAgentPlugin extends Plugin {
 
     this.addSettingTab(new VaultAgentSettingTab(this.app, this));
 
-    this.addRibbonIcon("sparkles", "Open Vault Agent", () => {
+    this.addRibbonIcon("sparkles", "Open Vault CLI Agent", () => {
       void this.activateView(true);
     });
 
     // Commands
     this.addCommand({
       id: "open-chat",
-      name: "Open Vault Agent sidebar",
+      name: "Open sidebar",
       callback: () => {
         void this.activateView(true);
       },
@@ -91,7 +91,7 @@ export default class VaultAgentPlugin extends Plugin {
 
     this.addCommand({
       id: "new-chat",
-      name: "Start new Vault Agent chat",
+      name: "Start new chat",
       callback: async () => {
         await this.activateView(true);
         await this.createNewSession();
@@ -100,7 +100,7 @@ export default class VaultAgentPlugin extends Plugin {
 
     this.addCommand({
       id: "attach-selection",
-      name: "Attach selected text to Vault Agent",
+      name: "Attach selected text to chat",
       editorCallback: (editor, view) => {
         const file = view.file;
         if (!file) {
@@ -113,7 +113,7 @@ export default class VaultAgentPlugin extends Plugin {
 
     this.addCommand({
       id: "ask-about-selection",
-      name: "Ask Vault Agent about selected text",
+      name: "Ask about selected text",
       editorCallback: (editor, view) => {
         const file = view.file;
         if (!file) {
@@ -126,7 +126,7 @@ export default class VaultAgentPlugin extends Plugin {
 
     this.addCommand({
       id: "attach-pattern-matches",
-      name: "Mark & attach text pattern matches from active note",
+      name: "Mark and attach text pattern matches from active note",
       callback: () => {
         void this.openAttachPatternModal();
       },
@@ -143,7 +143,7 @@ export default class VaultAgentPlugin extends Plugin {
           menu.addSeparator();
           menu.addItem((item) => {
             item
-              .setTitle("Ask Vault Agent about selection")
+              .setTitle("Ask Vault CLI Agent about selection")
               .setIcon("sparkles")
               .onClick(() => {
                 this.attachSelectionFromEditor(editor, file, true);
@@ -151,7 +151,7 @@ export default class VaultAgentPlugin extends Plugin {
           });
           menu.addItem((item) => {
             item
-              .setTitle("Attach selection to Vault Agent")
+              .setTitle("Attach selection to Vault CLI Agent")
               .setIcon("highlighter")
               .onClick(() => {
                 this.attachSelectionFromEditor(editor, file, false);
@@ -160,7 +160,7 @@ export default class VaultAgentPlugin extends Plugin {
         } else {
           menu.addItem((item) => {
             item
-              .setTitle("Mark text pattern for Vault Agent…")
+              .setTitle("Mark text pattern for Vault CLI Agent…")
               .setIcon("search-code")
               .onClick(() => {
                 void this.openAttachPatternModal();
@@ -207,8 +207,8 @@ export default class VaultAgentPlugin extends Plugin {
   }
 
   onunload(): void {
-    if (this.selectionDebounceTimer) {
-      clearTimeout(this.selectionDebounceTimer);
+    if (this.selectionDebounceTimer !== null) {
+      window.clearTimeout(this.selectionDebounceTimer);
       this.selectionDebounceTimer = null;
     }
     // Clear editor marks
@@ -303,10 +303,10 @@ export default class VaultAgentPlugin extends Plugin {
   }
 
   private scheduleSelectionCheck(): void {
-    if (this.selectionDebounceTimer) {
-      clearTimeout(this.selectionDebounceTimer);
+    if (this.selectionDebounceTimer !== null) {
+      window.clearTimeout(this.selectionDebounceTimer);
     }
-    this.selectionDebounceTimer = setTimeout(() => {
+    this.selectionDebounceTimer = window.setTimeout(() => {
       this.selectionDebounceTimer = null;
       this.updateLiveSelection();
       this.notifyContextUpdated();
@@ -599,9 +599,9 @@ export default class VaultAgentPlugin extends Plugin {
     }
 
     if (leaf) {
-      workspace.revealLeaf(leaf);
+      void workspace.revealLeaf(leaf);
       if (focusInput && leaf.view instanceof VaultAgentChatView) {
-        setTimeout(() => {
+        window.setTimeout(() => {
           if (leaf?.view instanceof VaultAgentChatView) {
             leaf.view.focusInput();
           }

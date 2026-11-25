@@ -3,7 +3,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { execFileSync } from "node:child_process";
 
-const PLUGIN_ID = "vault-agent";
+const PLUGIN_ID = "vault-cli-agent";
 const FILES_TO_COPY = ["manifest.json", "main.js", "styles.css"];
 
 function resolveVaultPath() {

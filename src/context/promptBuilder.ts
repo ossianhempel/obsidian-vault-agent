@@ -11,6 +11,7 @@ export interface PromptBuildInput {
   userMessage: string;
   vaultName: string;
   vaultRootPath: string;
+  configDir?: string;
   mode: AgentMode;
   activeFile: ActiveFileContext | null;
   snippets: TextSnippetAttachment[];
@@ -28,12 +29,14 @@ export interface PromptBuildInput {
 export function buildSystemInstructions(input: {
   vaultName: string;
   vaultRootPath: string;
+  configDir?: string;
   mode: AgentMode;
   enableObsidianCliGuidance: boolean;
   obsidianCliAvailable: boolean;
   vaultKnowledge?: VaultKnowledge;
   customSystemPrompt?: string;
 }): string {
+  const configDir = input.configDir || "the vault configuration folder";
   const lines: string[] = [
     `You are an AI assistant embedded inside Obsidian for the vault "${input.vaultName}".`,
     `Vault root directory: ${input.vaultRootPath}`,
@@ -49,7 +52,7 @@ export function buildSystemInstructions(input: {
     );
   } else {
     lines.push(
-      "- Mode is AGENT (EDIT ENABLED): You may read, search, create, and edit notes in the vault when requested. Follow the vault's conventions in AGENTS.md / LINKING.md and never edit files under .obsidian/.",
+      `- Mode is AGENT (EDIT ENABLED): You may read, search, create, and edit notes in the vault when requested. Follow the vault's conventions in AGENTS.md / LINKING.md and never edit files under ${configDir}/.`,
     );
   }
 
@@ -189,6 +192,7 @@ export function buildUserTurnPrompt(input: PromptBuildInput): {
   const systemInstructions = buildSystemInstructions({
     vaultName: input.vaultName,
     vaultRootPath: input.vaultRootPath,
+    configDir: input.configDir,
     mode: input.mode,
     enableObsidianCliGuidance: input.settings.enableObsidianCliGuidance,
     obsidianCliAvailable: input.obsidianCliAvailable,
